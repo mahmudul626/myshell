@@ -1,6 +1,5 @@
 #include "../include/myshell.h"
 
-
 int main() {
     char command[2014];
     char *args[200];
@@ -8,7 +7,9 @@ int main() {
 
     while (run)
     {
-        printf("myShell> ");
+        char cwd[1024];
+        getcwd(cwd, sizeof(cwd));
+        printf("\033[1;32mmyShell:\033[1;34m%s\033[0m$ ", cwd);
         fflush(stdout);
 
         if (fgets(command, sizeof(command), stdin) == NULL) break; 
@@ -28,40 +29,34 @@ int main() {
 
 
 
-        if (strcmp(args[0], "exit") == 0)
-        {
+        if (strcmp(args[0], "exit") == 0) {
             run = 0;
             continue;
-        } else if (strcmp(args[0], "cd") == 0)
-        {
+        } else if (strcmp(args[0], "cd") == 0) {
             if (args[1] == NULL)
             {
                 chdir(getenv("HOME"));
             } else {
-                chdir(args[1]);
+                if(chdir(args[1]) != 0)
+                        perror("cd");
             }
+            continue;   
+        } else if (strcmp(args[0], "pwd") == 0) {
+            printf("%s\n", cwd);
             continue;
-            
-        }
-        
-
-
-        
-        pid_t pid = fork();
-
-        if (pid == 0)
+        } else if (strcmp(args[0], "help") == 0)
         {
-            execvp(args[0], args);
-            perror("myShell");
-            exit(1);
-        } else {
-            wait(NULL);
+            printf("Built-in commands:\n");
+            printf("  cd    Change directory\n");
+            printf("  pwd   Show current directory\n");
+            printf("  exit  Exit shell\n");
+            printf("  help  Show this help\n");
+            continue;
         }
         
-        
+        pid_function(args);
         
     }
-    
-    
     return 0;
 }
+

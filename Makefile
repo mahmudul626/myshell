@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -Iinclude
 
-SRCS = src/main.c
+SRCS = src/main.c src/pid.c
 
 TARGET = myshell
 

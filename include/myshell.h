@@ -7,4 +7,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+void pid_function(char **args);
+
 #endif
