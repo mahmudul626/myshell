@@ -48,6 +48,10 @@ This compiles all source modules with include path set to the include directory.
 The shell displays the current working directory in the prompt and continues
 reading commands until exit is invoked.
 
+## Demo
+
+![myshell demo](demo/myshell-demo.gif)
+
 ## External Commands
 
 The shell forks a child process and executes external commands via execvp().
