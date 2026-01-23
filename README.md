@@ -50,7 +50,7 @@ reading commands until exit is invoked.
 
 ## Demo
 
-![myshell demo](demo/myshell-demo.gif)
+![myshell demo](demo/demo.gif)
 
 ## External Commands
 
