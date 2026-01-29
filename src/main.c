@@ -37,13 +37,24 @@ int main() {
                 break;
             }
             
+            
         }
 
-        if (and_index != -1)
+
+        int or_index = -1;
+        for (int i = 0; args[i] != NULL; i++)
         {
-           
-        
-        
+            if (strcmp(args[i], "||") == 0)
+            {
+                or_index = i;
+                break;
+            }
+              
+        }
+
+
+        if (and_index != -1)    {
+
         char *left[100];
         char *right[100];
 
@@ -64,6 +75,27 @@ int main() {
             if (right_status == 0) run = 0; 
         }
         
+        } else if (or_index != -1) {
+
+        char *left[100];
+        char *right[100];
+
+        // left part
+        for (int i = 0; i < or_index; i++)
+            left[i] = args[i];
+        left[or_index] = NULL;
+
+        // right part
+        int j = 0;
+        for (int i = or_index + 1; args[i] != NULL; i++)
+            right[j++] = args[i];
+        right[j] = NULL;
+
+        int left_status = execute_command(left, cwd);
+        if (left_status != 1) { // left failed
+            execute_command(right, cwd); 
+        }
+
         } else {
 
             int status = execute_command(args, cwd);
