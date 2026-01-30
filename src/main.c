@@ -13,8 +13,7 @@ int main() {
         printf("\033[1;32mmyShell:\033[1;34m%s\033[0m$ ", cwd);
         fflush(stdout);
 
-        if (fgets(command, sizeof(command), stdin) == NULL) break; 
-        command[strcspn(command, "\n")] = 0;
+        if (!read_input(command, sizeof(command))) break;
 
         int i = 0;
         char *token = strtok(command, " \t\n");
