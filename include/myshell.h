@@ -8,10 +8,12 @@
 #include <termios.h>
 #include <dirent.h>
 #include <sys/wait.h>
+#include <ctype.h>
 
 int pid_function(char **args);
 int built_in(char **args, char *cwd);
 int execute_command(char **args, char *cwd);
 int read_input(char *buffer, size_t size);
+void auto_complete(char *buffer, size_t *i, size_t size, int last_char);
 
 #endif
