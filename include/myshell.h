@@ -9,6 +9,8 @@
 #include <dirent.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <sys/ioctl.h>
+#include <signal.h>
 
 int pid_function(char **args);
 int built_in(char **args, char *cwd);
