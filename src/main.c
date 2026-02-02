@@ -6,6 +6,14 @@ int main() {
     char *args[200];
     int run = 1;
 
+    struct sigaction sa;
+    sa.sa_handler = sigint_handler;  // function declared in myshell.h
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;                 // NOT SA_RESTART
+    sigaction(SIGINT, &sa, NULL);
+
+
+
     while (run)
     {
         char cwd[1024];
