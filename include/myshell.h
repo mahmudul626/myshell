@@ -12,6 +12,8 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 int pid_function(char **args);
 int built_in(char **args, char *cwd);

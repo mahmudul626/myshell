@@ -8,7 +8,6 @@ int already_exists(char *matches[], int count, const char *name) {
     return 0;
 }
 
-
 int compare_strings(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
@@ -17,10 +16,11 @@ void auto_complete(char *buffer, size_t *i, size_t size, int last_char) {
     char *last_word = buffer;
     int is_command = 1;
 
+    // Find last word
     for (int j = (int)(*i) - 1; j >= 0; j--) {
         if (buffer[j] == ' ') {
             last_word = &buffer[j + 1];
-            is_command = 0; 
+            is_command = 0;
             break;
         }
     }
@@ -28,11 +28,11 @@ void auto_complete(char *buffer, size_t *i, size_t size, int last_char) {
     size_t lw_len = strlen(last_word);
     if (lw_len == 0 && !is_command) return;
 
-    char *matches[512]; 
+    char *matches[512];
     int match_count = 0;
 
-    
     if (is_command) {
+        // PATH command completion
         char *path_env = getenv("PATH");
         if (path_env) {
             char *path_dup = strdup(path_env);
@@ -56,12 +56,24 @@ void auto_complete(char *buffer, size_t *i, size_t size, int last_char) {
             free(path_dup);
         }
     } else {
-        
-        DIR *dir = opendir(".");
+        // Determine path and prefix
+        char dir_path[1024];
+        char prefix[256];
+        const char *slash = strrchr(last_word, '/');
+        if (slash) {
+            strncpy(dir_path, last_word, slash - last_word + 1);
+            dir_path[slash - last_word + 1] = '\0';
+            strcpy(prefix, slash + 1);
+        } else {
+            strcpy(dir_path, ".");
+            strcpy(prefix, last_word);
+        }
+
+        DIR *dir = opendir(dir_path);
         if (dir) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL && match_count < 512) {
-                if (entry->d_name[0] != '.' && strncmp(entry->d_name, last_word, lw_len) == 0) {
+                if (strncmp(entry->d_name, prefix, strlen(prefix)) == 0) {
                     if (!already_exists(matches, match_count, entry->d_name)) {
                         matches[match_count++] = strdup(entry->d_name);
                     }
@@ -69,29 +81,47 @@ void auto_complete(char *buffer, size_t *i, size_t size, int last_char) {
             }
             closedir(dir);
         }
+
+        
+        if (strncmp(prefix, ".", strlen(prefix)) == 0) {
+            if (!already_exists(matches, match_count, ".")) matches[match_count++] = strdup(".");
+            if (!already_exists(matches, match_count, "..")) matches[match_count++] = strdup("..");
+        }
     }
 
-    
     if (match_count == 1) {
-        size_t m_len = strlen(matches[0]);
-        for (size_t j = lw_len; j < m_len && *i < size - 1; j++) {
-            buffer[(*i)++] = matches[0][j];
-            putchar(matches[0][j]);
+        // one match → autocomplete
+        char *name = matches[0];
+        char full_path[1024];
+
+        if (strrchr(last_word, '/')) {
+            snprintf(full_path, sizeof(full_path), "%.*s%s", (int)(strrchr(last_word,'/') - last_word + 1), last_word, name);
+        } else {
+            snprintf(full_path, sizeof(full_path), "%s", name);
+        }
+
+        struct stat st;
+        if (stat(full_path, &st) == 0 && S_ISDIR(st.st_mode)) {
+            strcat(full_path, "/"); // if directory  /
+        }
+
+        for (size_t j = lw_len; j < strlen(full_path) && *i < size - 1; j++) {
+            buffer[(*i)++] = full_path[j];
+            putchar(full_path[j]);
         }
         fflush(stdout);
-    } 
-    else if (match_count > 1 && last_char == '\t') {
-        
+    } else if (match_count > 1 && last_char == '\t') {
+        // multy match → display neatly
         qsort(matches, match_count, sizeof(char *), compare_strings);
-
         printf("\n");
+
         if (match_count > 50) {
             printf("Display all %d possibilities? (y or n) ", match_count);
             fflush(stdout);
             int ch = getchar();
             if (ch != 'y' && ch != 'Y') {
                 printf("\n");
-                goto cleanup; 
+                goto cleanup;
             }
             printf("\n");
         }
