@@ -1,4 +1,5 @@
 #include "../include/myshell.h"
+#define PATH_MAX 4096
 
 int built_in(char **args, char *cwd) {
 
@@ -21,7 +22,17 @@ int built_in(char **args, char *cwd) {
             printf("%s\n", cwd);
             return 1;
         } else if (strcmp(args[0], "history") == 0) {
-            FILE *fptr = fopen(".history", "r");
+            char path[PATH_MAX];
+            char *home = getenv("HOME");
+            if (home == NULL) {
+                perror("path");
+                return 1;
+            }
+            
+            snprintf(path, sizeof(path), "%s/.history", home);
+
+
+            FILE *fptr = fopen(path, "r");
             if (fptr == NULL) {
                 perror("history");
                 return 1;
