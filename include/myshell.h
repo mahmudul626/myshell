@@ -21,6 +21,7 @@ int execute_command(char **args, char *cwd);
 int read_input(char *buffer, size_t size);
 void auto_complete(char *buffer, size_t *i, size_t size, int last_char);
 void sigint_handler(int signo);
+void save_history_to_file();
 
 
 #endif

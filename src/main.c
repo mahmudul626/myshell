@@ -112,6 +112,7 @@ int main() {
 
         
     }
+    save_history_to_file();
     return 0;
 }
 
