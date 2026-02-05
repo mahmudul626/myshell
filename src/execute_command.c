@@ -1,6 +1,6 @@
 #include "../include/myshell.h"
 
-int execute_command(char **args, char *cwd) {
+int execute_command(char **args, char *cwd, int is_background) {
 
     int status = built_in(args, cwd);
 
@@ -12,7 +12,7 @@ int execute_command(char **args, char *cwd) {
             return status;
         } else {
 
-            int pid = pid_function(args);
+            int pid = pid_function(args, is_background);
             if (pid == 1)
             {
                 return pid;

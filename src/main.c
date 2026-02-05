@@ -1,6 +1,13 @@
 #include "../include/myshell.h"
 
 
+void sigchld_handler(int sig) {
+    // মৃত প্রসেসগুলোকে পরিষ্কার (reap) করা
+    // WNOHANG নিশ্চিত করে যে কোনো প্রসেস রানিং থাকলে শেল আটকে যাবে না
+    while (waitpid(-1, NULL, WNOHANG) > 0);
+}
+
+
 int main() {
     char command[2014];
     char *args[200];
@@ -11,6 +18,16 @@ int main() {
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;                 // NOT SA_RESTART
     sigaction(SIGINT, &sa, NULL);
+
+
+    struct sigaction sa_chld;
+    sa_chld.sa_handler = sigchld_handler;
+    sigemptyset(&sa_chld.sa_mask);
+    sa_chld.sa_flags = SA_RESTART | SA_NOCLDSTOP; // SA_RESTART দিলে সিস্টেম কল ইন্টারাপ্ট হবে না
+    if (sigaction(SIGCHLD, &sa_chld, NULL) == -1) {
+        perror("sigaction");
+        exit(1);
+    }
 
 
 
@@ -33,6 +50,13 @@ int main() {
 
         args[i] = NULL;
 
+
+        int is_background = 0;
+        // Check if the last argument is '&'
+        if (i > 0 && strcmp(args[i-1], "&") == 0) {
+            is_background = 1;
+            args[i-1] = NULL; // Remove '&' so the command doesn't get confused
+        }
 
 
         int and_index = -1;
@@ -76,9 +100,9 @@ int main() {
             right[j++] = args[i];
         right[j] = NULL;
 
-        int left_status = execute_command(left, cwd);
+        int left_status = execute_command(left, cwd, is_background);
         if (left_status == 1) {
-            int right_status = execute_command(right, cwd);
+            int right_status = execute_command(right, cwd, is_background);
             if (right_status == 0) run = 0; 
         }
         
@@ -98,14 +122,14 @@ int main() {
             right[j++] = args[i];
         right[j] = NULL;
 
-        int left_status = execute_command(left, cwd);
+        int left_status = execute_command(left, cwd, is_background);
         if (left_status != 1) { // left failed
-            execute_command(right, cwd); 
+            execute_command(right, cwd, is_background); 
         }
 
         } else {
 
-            int status = execute_command(args, cwd);
+            int status = execute_command(args, cwd, is_background);
             if (status == 0) run = 0;
 
         }

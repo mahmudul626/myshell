@@ -1,8 +1,9 @@
 #include "../include/myshell.h"
 
-int pid_function(char **args) {
+int job_count = 1;
 
-    
+int pid_function(char **args, int is_background) {
+
     int status;
     pid_t pid = fork();
 
@@ -19,13 +20,18 @@ int pid_function(char **args) {
     } 
     else {
         // Parent Process
-        waitpid(pid, &status, 0);
+        if(is_background) {
+            printf("[%d] %d\n", job_count++, pid);
+            return 1;
+        } else {
+            waitpid(pid, &status, 0);
 
-        if (WIFEXITED(status)) {
-            if (WEXITSTATUS(status) == 0) {
-                return 1;
-            } else {
-                return -1;
+            if (WIFEXITED(status)) {
+                if (WEXITSTATUS(status) == 0) {
+                    return 1;
+                } else {
+                    return -1;
+                }
             }
         }
     }

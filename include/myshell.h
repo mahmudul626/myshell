@@ -15,12 +15,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-int pid_function(char **args);
+int pid_function(char **args, int is_background);
 int built_in(char **args, char *cwd);
-int execute_command(char **args, char *cwd);
+int execute_command(char **args, char *cwd, int is_background);
 int read_input(char *buffer, size_t size);
 void auto_complete(char *buffer, size_t *i, size_t size, int last_char);
 void sigint_handler(int signo);
+void sigchld_handler(int sig);
 void save_history_to_file();
 
 
