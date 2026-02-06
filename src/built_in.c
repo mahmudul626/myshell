@@ -1,5 +1,4 @@
 #include "../include/myshell.h"
-#define PATH_MAX 4096
 
 int built_in(char **args, char *cwd) {
 
@@ -22,15 +21,18 @@ int built_in(char **args, char *cwd) {
             printf("%s\n", cwd);
             return 1;
         } else if (strcmp(args[0], "history") == 0) {
-            char path[PATH_MAX];
             char *home = getenv("HOME");
             if (home == NULL) {
                 perror("path");
                 return 1;
             }
-            
-            snprintf(path, sizeof(path), "%s/.history", home);
 
+            // runtime PATH_MAX determination
+            long path_max = pathconf(home, _PC_PATH_MAX);
+            if (path_max == -1) path_max = 4096; // fallback
+
+            char path[path_max + 20]; // ".history" + null terminator-এর জন্য extra space
+            snprintf(path, sizeof(path), "%s/.history", home);
 
             FILE *fptr = fopen(path, "r");
             if (fptr == NULL) {
@@ -45,7 +47,6 @@ int built_in(char **args, char *cwd) {
                 printf(" %d  %s", line_num++, buffer);
             }
 
-            // printf("\n");
             fclose(fptr);
             return 1;
         } else if (strcmp(args[0], "help") == 0)

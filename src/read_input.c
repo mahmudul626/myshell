@@ -1,5 +1,4 @@
 #include "../include/myshell.h"
-#define PATH_MAX 4096
 #define MAX_HIST 100
 static char *history[MAX_HIST];
 static int h_count = 0;
@@ -16,13 +15,17 @@ void sigint_handler(int signo)
 
 
 void save_history_to_file() {
-    char path[PATH_MAX];
     char *home = getenv("HOME");
     if (home == NULL) {
         printf("Failed to get path\n");
         return;
     }
-    
+
+    // runtime PATH_MAX determination
+    long path_max = pathconf(home, _PC_PATH_MAX);
+    if (path_max == -1) path_max = 4096; // fallback
+
+    char path[path_max + 20]; // ".history" + null terminator-এর জন্য extra space
     snprintf(path, sizeof(path), "%s/.history", home);
 
     FILE *fp = fopen(path, "a");
@@ -30,10 +33,12 @@ void save_history_to_file() {
 
     for (int j = 0; j < h_count; j++) {
         fprintf(fp, "%s\n", history[j]);
-        free(history[j]); // Memory clean 
+        free(history[j]); // memory clean
     }
+
     fclose(fp);
 }
+
 
 int read_input(char *buffer, size_t size)
 {
