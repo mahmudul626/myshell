@@ -1,64 +1,88 @@
 # myshell
 
-A minimal shell implementation in C that demonstrates core Unix process management
-and command execution fundamentals. This project separates concerns into discrete
-modules for command parsing, built-in operations, and external process spawning.
+A minimal yet feature-rich Unix-like shell implementation in C that demonstrates core operating system concepts such as process management, signal handling, terminal control, and command parsing. This project is designed with a clean, modular architecture and evolves incrementally to showcase real-world shell behaviors similar to bash.
 
 ## Architecture
 
-The shell is structured around three primary execution paths:
+The shell is structured around clear, single-responsibility modules that cooperate through well-defined interfaces:
 
-- **built_in.c**: Handles built-in commands (cd, pwd, exit, help) without process
-  forking. These operations execute within the parent shell context.
+* **built_in.c**
+  Handles built-in commands such as `cd`, `pwd`, `exit`, `help`, and `history` without forking. Built-ins execute in the parent shell context to correctly affect shell state (e.g., working directory, history).
 
-- **pid.c**: Manages external command execution through fork/execvp. Returns exit
-  status to enable proper command chaining behavior. Error handling differentiates
-  between fork failures and command not found conditions.
+* **pid.c / pid_function.c**
+  Manages external command execution using `fork()` and `execvp()`. Returns accurate exit status to the caller, enabling correct logical operator semantics. Error handling distinguishes between fork failures and command-not-found cases.
 
-- **execute_command.c**: Route dispatcher that checks for built-in commands first,
-  then delegates to pid_function for external commands. Centralizes control flow
-  logic and status propagation.
+* **execute_command.c**
+  Central command dispatcher. Determines whether a command is built-in or external, routes execution accordingly, and propagates exit codes back to the main loop.
 
-- **main.c**: Event loop that tokenizes input, detects logical AND operators (&&),
-  and chains command execution based on success/failure semantics. Manages prompt
-  rendering and interactive state.
+* **read_input.c**
+  Implements interactive terminal input using raw mode. Supports backspace, Ctrl+C, Ctrl+D, arrow-key history navigation, and tab-based auto-completion. Ensures terminal state is safely restored after input.
+
+* **auto_complete.c**
+  Provides bash-like tab completion for commands and paths. Supports PATH-based command lookup, absolute and relative paths, nested directories, hidden files, single-match completion, and formatted multi-match listings.
+
+* **main.c**
+  The event loop of the shell. Renders the colored prompt, reads user input, parses logical operators (`&&`, `||`), manages interactive state, installs signal handlers, and controls command chaining behavior.
+
+## Features
+
+* Built-in commands executed without forking
+* External command execution via `fork()` / `execvp()`
+* Logical operators: `&&` and `||`
+* Persistent command history saved in `$HOME/.history`
+* Arrow-key navigation through command history
+* Tab-based auto-completion for commands and file paths
+* Nested directory and path completion
+* Background process execution using `&`
+* SIGCHLD handling for zombie process cleanup
+* Robust Ctrl+C handling without terminating the shell
+* Ctrl+D support to exit on empty input
+* Portable runtime path handling using `pathconf()` (no fixed `PATH_MAX`)
 
 ## Built-in Commands
 
-- cd [path]     Change working directory (no args: go to HOME)
-- pwd           Print current working directory
-- exit          Terminate shell
-- help          Display command reference
+* `cd [path]` – Change the current working directory (no argument defaults to `$HOME`)
+* `pwd` – Print the current working directory
+* `history` – Display command history with persistent numbering
+* `help` – Show built-in command reference
+* `exit` – Terminate the shell
 
 ## Operator Support
 
-- &&             Logical AND - execute right side only if left side succeeds
-                 Example: cd /tmp && ls
+* `&&` Logical AND – Execute the right-hand command only if the left-hand command succeeds
+  Example:
+
+  ```sh
+  cd /tmp && ls
+  ```
+
+* `||` Logical OR – Execute the right-hand command only if the left-hand command fails
 
 ## Building
 
-  make
+```sh
+make
+```
 
-This compiles all source modules with include path set to the include directory.
+Compiles all source modules with the include path set to the `include/` directory.
 
 ## Running
 
-  ./myshell
+```sh
+./myshell
+```
 
-The shell displays the current working directory in the prompt and continues
-reading commands until exit is invoked.
-
-## Demo
-
-![myshell demo](demo/demo.gif)
+The shell displays a colored prompt with the current working directory and continues accepting commands until `exit` is invoked or Ctrl+D is pressed on an empty line.
 
 ## External Commands
 
-The shell forks a child process and executes external commands via execvp().
-The parent process waits for completion and propagates exit codes up through
-the call stack. This enables proper && operator semantics.
+External programs are executed in child processes created via `fork()`. The parent process waits (or does not wait, for background jobs) and propagates exit codes upward. This design enables correct logical operator behavior and clean process lifecycle management.
+
+## Demo
+
+A demo GIF showcasing interactive usage (history, auto-complete, operators) is included in the repository.
+![myshell demo](demo/demo.gif)
 
 ## Notes
 
-This implementation prioritizes clarity over performance. It is intended as an
-educational reference for understanding shell mechanics, not production use.
+This project prioritizes clarity, correctness, and educational value over raw performance. It serves as a practical reference for understanding how real shells manage input, processes, signals, and execution flow, and is not intended for production use.
